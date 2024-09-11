@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 )
@@ -84,12 +83,12 @@ func (s *Scheduler) Start() {
 					// Todo : handle corner case on what happens when this wakes up. (i.e no job is added)
 					timer = time.NewTimer(10000 * time.Hour)
 				} else {
-					// todo : graceful handling using channels
-					log.Fatal(peekErr)
+					fmt.Println("error in peek operation on job queue")
+					continue
 				}
 			}
 			if peekErr == nil {
-				timer = time.NewTimer(nextJob.Next.Sub(curTime))
+				timer = time.NewTimer(nextJob.NextRunTime.Sub(curTime))
 			}
 
 			select {
@@ -100,12 +99,12 @@ func (s *Scheduler) Start() {
 					continue
 				}
 				jobToRun.Run()
-				jobToRun.Next = jobToRun.Schedule.Next(curTime)
+				jobToRun.NextRunTime = jobToRun.Schedule.Next(curTime)
 				heap.Push(s.jobQueue, jobToRun)
 			case jobId := <-s.addJobChan:
 				timer.Stop()
 				job := s.scheduledJobs[jobId]
-				job.Next = job.Schedule.Next(curTime)
+				job.NextRunTime = job.Schedule.Next(curTime)
 				heap.Push(s.jobQueue, job)
 			case <-s.stopSchedulerChan:
 				timer.Stop()
@@ -131,7 +130,7 @@ func buildJobQueue(scheduledJobs map[string]*ScheduledJob) *JobQueue {
 	jobQueue := &JobQueue{}
 	heap.Init(jobQueue)
 	for _, job := range scheduledJobs {
-		job.Next = job.Schedule.Next(curTime)
+		job.NextRunTime = job.Schedule.Next(curTime)
 		heap.Push(jobQueue, job)
 	}
 	return jobQueue
@@ -208,7 +207,7 @@ func getJobDetails(job *ScheduledJob) JobDetails {
 		Id:               job.Id,
 		Schedule:         job.Schedule,
 		MaxExecutionTime: job.MaxExecutionTime,
-		Next:             job.Next,
+		Next:             job.NextRunTime,
 		Metrics:          job.Metrics,
 		JobStatus:        job.jobStatus,
 	}

@@ -1,10 +1,10 @@
 package scheduler
 
-// JobQueue implements heap.Interface with a min heap using ScheduledJob.Next as the key.
+// JobQueue implements heap.Interface with a min heap using ScheduledJob.NextRunTime as the key.
 type JobQueue []*ScheduledJob
 
 func (h *JobQueue) Len() int           { return len(*h) }
-func (h *JobQueue) Less(i, j int) bool { return (*h)[i].Next.Before((*h)[j].Next) }
+func (h *JobQueue) Less(i, j int) bool { return (*h)[i].NextRunTime.Before((*h)[j].NextRunTime) }
 func (h *JobQueue) Swap(i, j int)      { (*h)[i], (*h)[j] = (*h)[j], (*h)[i] }
 
 func (h *JobQueue) Push(x any) {

@@ -15,7 +15,7 @@ type ScheduledJob struct {
 	Runnable         Runnable
 	Schedule         Schedule
 	MaxExecutionTime time.Duration
-	Next             time.Time
+	NextRunTime      time.Time
 	Metrics          *JobMetrics
 	jobStatus        JobStatus
 	mutex            *sync.RWMutex

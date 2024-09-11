@@ -10,9 +10,9 @@ func TestJobQueue_Push(t *testing.T) {
 	jobQueue := &JobQueue{}
 	heap.Init(jobQueue)
 
-	job1 := &ScheduledJob{Id: "job1", Next: time.Now().Add(10 * time.Minute)}
-	job2 := &ScheduledJob{Id: "job2", Next: time.Now().Add(5 * time.Minute)}
-	job3 := &ScheduledJob{Id: "job3", Next: time.Now().Add(15 * time.Minute)}
+	job1 := &ScheduledJob{Id: "job1", NextRunTime: time.Now().Add(10 * time.Minute)}
+	job2 := &ScheduledJob{Id: "job2", NextRunTime: time.Now().Add(5 * time.Minute)}
+	job3 := &ScheduledJob{Id: "job3", NextRunTime: time.Now().Add(15 * time.Minute)}
 
 	heap.Push(jobQueue, job1)
 	heap.Push(jobQueue, job2)
@@ -27,9 +27,9 @@ func TestJobQueue_Pop(t *testing.T) {
 	jobQueue := &JobQueue{}
 	heap.Init(jobQueue)
 
-	job1 := &ScheduledJob{Id: "job1", Next: time.Now().Add(10 * time.Minute)}
-	job2 := &ScheduledJob{Id: "job2", Next: time.Now().Add(5 * time.Minute)}
-	job3 := &ScheduledJob{Id: "job3", Next: time.Now().Add(15 * time.Minute)}
+	job1 := &ScheduledJob{Id: "job1", NextRunTime: time.Now().Add(10 * time.Minute)}
+	job2 := &ScheduledJob{Id: "job2", NextRunTime: time.Now().Add(5 * time.Minute)}
+	job3 := &ScheduledJob{Id: "job3", NextRunTime: time.Now().Add(15 * time.Minute)}
 
 	heap.Push(jobQueue, job1)
 	heap.Push(jobQueue, job2)
@@ -45,9 +45,9 @@ func TestJobQueue_Peek(t *testing.T) {
 	jobQueue := &JobQueue{}
 	heap.Init(jobQueue)
 
-	job1 := &ScheduledJob{Id: "job1", Next: time.Now().Add(10 * time.Minute)}
-	job2 := &ScheduledJob{Id: "job2", Next: time.Now().Add(5 * time.Minute)}
-	job3 := &ScheduledJob{Id: "job3", Next: time.Now().Add(15 * time.Minute)}
+	job1 := &ScheduledJob{Id: "job1", NextRunTime: time.Now().Add(10 * time.Minute)}
+	job2 := &ScheduledJob{Id: "job2", NextRunTime: time.Now().Add(5 * time.Minute)}
+	job3 := &ScheduledJob{Id: "job3", NextRunTime: time.Now().Add(15 * time.Minute)}
 
 	heap.Push(jobQueue, job1)
 	heap.Push(jobQueue, job2)
