@@ -48,13 +48,16 @@ func NewScheduler() *Scheduler {
 func (s *Scheduler) AddJob(job *runner.ScheduledJob) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	// check if the job has been deleted before else return error
 	if _, exists := s.deletedJobs[job.Id]; exists {
 		return ErrJobIdPreviouslyDeleted
 	}
+	// add to scheduled jobs if not already present
 	if _, exists := s.scheduledJobs[job.Id]; exists {
 		return ErrJobAlreadyAdded
 	}
 	s.scheduledJobs[job.Id] = job
+	// if the scheduler is running, send the job id to the addJobChan for the scheduler to add it to the job queue
 	if s.schedulerState == schedulerRunning {
 		s.addJobChan <- job.Id
 	}
@@ -63,6 +66,7 @@ func (s *Scheduler) AddJob(job *runner.ScheduledJob) error {
 
 func (s *Scheduler) Start() {
 	s.mutex.Lock()
+	// return if scheduler is already running
 	if s.schedulerState == schedulerRunning {
 		return
 	}
@@ -74,7 +78,7 @@ func (s *Scheduler) Start() {
 	go func() {
 		for {
 			if s.schedulerState == schedulerStopped {
-				break
+				return
 			}
 			curTime := time.Now()
 			// determine the next entry to run.
@@ -82,8 +86,7 @@ func (s *Scheduler) Start() {
 			nextJob, peekErr := s.jobQueue.Peek()
 			if peekErr != nil {
 				if errors.Is(peekErr, jobqueue.ErrJobQueueEmpty) {
-					// no jobs in queue. Sleep for a long time. The scheduler will be woken up when a new job is added.
-					// Todo : handle corner case on what happens when this wakes up. (i.e no job is added)
+					// no jobs in queue. Sleep for a long time. The scheduler will be woken up when a new job is added or after below timeout
 					timer = time.NewTimer(10000 * time.Hour)
 				} else {
 					fmt.Println("error in peek operation on job queue")
@@ -96,22 +99,28 @@ func (s *Scheduler) Start() {
 
 			select {
 			case curTime = <-timer.C:
+				if s.jobQueue.Len() == 0 { // case when scheduler wakes up but no jobs in queue
+					break
+				}
 				jobToRun := heap.Pop(s.jobQueue).(*runner.ScheduledJob)
 				timer.Stop()
 				if jobToRun.ScheduleStatus != runner.Active {
 					continue
 				}
+				// run the job async and calculate the next run time for the job and push it to the job queue
 				jobToRun.Run()
 				jobToRun.NextRunTime = jobToRun.Schedule.Next(curTime)
 				heap.Push(s.jobQueue, jobToRun)
 			case jobId := <-s.addJobChan:
 				timer.Stop()
 				job := s.scheduledJobs[jobId]
+				// calculate the next run time for the job and push it to the job queue
 				job.NextRunTime = job.Schedule.Next(curTime)
 				heap.Push(s.jobQueue, job)
 			case <-s.stopSchedulerChan:
 				timer.Stop()
 				fmt.Println("stopping scheduler")
+				return
 			case <-s.pauseSchedulerChan:
 				timer.Stop()
 				// block this goroutine until resume is called
@@ -119,9 +128,11 @@ func (s *Scheduler) Start() {
 				select {
 				case <-s.resumeSchedulerChannel:
 					fmt.Println("Scheduler : resuming scheduler")
+					// rebuild job queue using current time
 					s.jobQueue = buildJobQueue(s.scheduledJobs)
 				case <-s.stopSchedulerChan:
 					fmt.Println("Scheduler : stopping scheduler")
+					return
 				}
 			}
 		}
@@ -200,7 +211,7 @@ type JobDetails struct {
 	Id               string
 	Schedule         runner.Schedule
 	MaxExecutionTime time.Duration
-	Next             time.Time
+	NextRunTime      time.Time
 	Metrics          *runner.JobMetrics
 	JobStatus        runner.JobStatus
 }
@@ -210,7 +221,7 @@ func getJobDetails(job *runner.ScheduledJob) JobDetails {
 		Id:               job.Id,
 		Schedule:         job.Schedule,
 		MaxExecutionTime: job.MaxExecutionTime,
-		Next:             job.NextRunTime,
+		NextRunTime:      job.NextRunTime,
 		Metrics:          job.Metrics,
 		JobStatus:        job.JobStatus,
 	}

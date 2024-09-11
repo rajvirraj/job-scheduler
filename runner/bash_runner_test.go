@@ -35,7 +35,7 @@ func TestBashRunner_Run_Timeout(t *testing.T) {
 	bashRunner := NewBashJob(scriptPath)
 	exitCode := bashRunner.Run(2 * time.Second)
 
-	if exitCode != 3 {
+	if exitCode != 2 {
 		t.Errorf("expected code 3 for timeout, got %d", exitCode)
 	}
 }

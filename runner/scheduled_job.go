@@ -68,7 +68,9 @@ type JobMetrics struct {
 	AvgExecutionTimeForFailure  float32
 }
 
+// this schedule only takes secinds as input
 type CronSchedule struct {
+	// repeat interval in seconds for job
 	seconds int
 }
 
