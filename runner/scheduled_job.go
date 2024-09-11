@@ -1,4 +1,4 @@
-package scheduler
+package runner
 
 import (
 	"strconv"
@@ -17,7 +17,7 @@ type ScheduledJob struct {
 	MaxExecutionTime time.Duration
 	NextRunTime      time.Time
 	Metrics          *JobMetrics
-	jobStatus        JobStatus
+	JobStatus        JobStatus
 	mutex            *sync.RWMutex
 	ScheduleStatus   ScheduleStatus
 }
@@ -26,18 +26,18 @@ type JobStatus int32
 
 const (
 	// job is currently running
-	Job_Running JobStatus = iota
+	Running JobStatus = iota
 	// job is waiting according to its schedule
-	Job_Waiting
+	Waiting
 )
 
 type ScheduleStatus int32
 
 const (
 	// schedule is active
-	Schedule_Active ScheduleStatus = iota
+	Active ScheduleStatus = iota
 	// schedule is deleted
-	Schedule_Deleted
+	Deleted
 )
 
 func NewScheduledJob(id string, schedule Schedule, maxExecutionTime time.Duration, job Runnable) *ScheduledJob {
@@ -53,9 +53,9 @@ func NewScheduledJob(id string, schedule Schedule, maxExecutionTime time.Duratio
 			AvgExecutionTimeForSuccess: 0.0,
 			AvgExecutionTimeForFailure: 0.0,
 		},
-		jobStatus:      Job_Waiting,
+		JobStatus:      Waiting,
 		mutex:          &sync.RWMutex{},
-		ScheduleStatus: Schedule_Active,
+		ScheduleStatus: Active,
 	}
 }
 
@@ -90,11 +90,11 @@ func (scheduledJob *ScheduledJob) Run() {
 		now := time.Now()
 		// check if job is already running, then return as change job status to running
 		scheduledJob.mutex.Lock()
-		if scheduledJob.jobStatus == Job_Running {
+		if scheduledJob.JobStatus == Running {
 			scheduledJob.mutex.Unlock()
 			return
 		}
-		scheduledJob.jobStatus = Job_Running
+		scheduledJob.JobStatus = Running
 		scheduledJob.mutex.Unlock()
 
 		// execute the job
@@ -102,7 +102,7 @@ func (scheduledJob *ScheduledJob) Run() {
 
 		// acquire lock and update job_status and metrics
 		scheduledJob.mutex.Lock()
-		scheduledJob.jobStatus = Job_Waiting
+		scheduledJob.JobStatus = Waiting
 		scheduledJob.Metrics.updateMetrics(jobStatusCode, time.Since(now))
 		scheduledJob.mutex.Unlock()
 	}()
@@ -135,5 +135,5 @@ func (scheduledJob *ScheduledJob) GetScheduleStatus() ScheduleStatus {
 func (scheduledJob *ScheduledJob) DeleteSchedule() {
 	scheduledJob.mutex.Lock()
 	defer scheduledJob.mutex.Unlock()
-	scheduledJob.ScheduleStatus = Schedule_Deleted
+	scheduledJob.ScheduleStatus = Deleted
 }

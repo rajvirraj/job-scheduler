@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/personal/assignment_2/runner"
 )
 
 type TestRunner struct {
@@ -28,7 +30,7 @@ func TestScheduler_SingleJob(t *testing.T) {
 	wg.Add(3)
 
 	scheduler := NewScheduler()
-	job := NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
+	job := runner.NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
 	err := scheduler.AddJob(job)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -52,7 +54,7 @@ func TestScheduler_MultipleJobs(t *testing.T) {
 	wg1.Add(3)
 
 	scheduler := NewScheduler()
-	job1 := NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 7 * time.Second}, 10*time.Second, &TestRunner{wg: &wg1, name: "TestJob1"})
+	job1 := runner.NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 7 * time.Second}, 10*time.Second, &TestRunner{wg: &wg1, name: "TestJob1"})
 	addJob1Err := scheduler.AddJob(job1)
 	if addJob1Err != nil {
 		t.Fatalf("expected no error, got %v", addJob1Err)
@@ -60,7 +62,7 @@ func TestScheduler_MultipleJobs(t *testing.T) {
 
 	var wg2 sync.WaitGroup
 	wg2.Add(4)
-	job2 := NewScheduledJob("job2", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg2, name: "TestJob2"})
+	job2 := runner.NewScheduledJob("job2", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg2, name: "TestJob2"})
 	addJob2Err := scheduler.AddJob(job2)
 	if addJob2Err != nil {
 		t.Fatalf("expected no error, got %v", addJob2Err)
@@ -104,7 +106,7 @@ func TestScheduler_RemoveJob(t *testing.T) {
 	wg.Add(3)
 
 	scheduler := NewScheduler()
-	job := NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
+	job := runner.NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
 	err := scheduler.AddJob(job)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -141,7 +143,7 @@ func TestScheduler_PauseAndResume(t *testing.T) {
 	wg.Add(3)
 
 	scheduler := NewScheduler()
-	job := NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
+	job := runner.NewScheduledJob("job1", &RepeatSchedule{repeatInterval: 5 * time.Second}, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
 	err := scheduler.AddJob(job)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -189,7 +191,7 @@ func TestScheduler_GetJobDetails(t *testing.T) {
 
 	scheduler := NewScheduler()
 	schedule := &RepeatSchedule{repeatInterval: 5 * time.Second}
-	job := NewScheduledJob("job1", schedule, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
+	job := runner.NewScheduledJob("job1", schedule, 10*time.Second, &TestRunner{wg: &wg, name: "TestJob1"})
 	err := scheduler.AddJob(job)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -222,7 +224,7 @@ func TestScheduler_MaxExecutionTimeTermination(t *testing.T) {
 
 	scheduler := NewScheduler()
 	schedule := &RepeatSchedule{repeatInterval: 5 * time.Second}
-	job := NewScheduledJob("job1", schedule, 2*time.Second, &TestRunner{wg: &wg, name: "TestJob1", sleepSeconds: 4})
+	job := runner.NewScheduledJob("job1", schedule, 2*time.Second, &TestRunner{wg: &wg, name: "TestJob1", sleepSeconds: 4})
 	err := scheduler.AddJob(job)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
